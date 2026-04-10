@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Billing by Hospital & Insurance</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="interactive_bar_data.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; margin: 0; padding: 20px; }
+    h2 { text-align: center; }
+    #controls { text-align: center; margin-bottom: 16px; }
+    select { font-size: 14px; padding: 4px 8px; }
+    .bar { cursor: pointer; }
+    .bar:hover { opacity: 0.75; }
+    .legend-item { cursor: pointer; }
+    .legend-item.faded rect { opacity: 0.2; }
+    .legend-item.faded text { opacity: 0.4; }
+    .tooltip {
+      position: absolute; background: #222; color: #fff;
+      padding: 7px 11px; border-radius: 5px; font-size: 12px;
+      pointer-events: none; display: none;
+    }
+    #chart { display: flex; justify-content: center; }
+  </style>
+</head>
+<body>
+<h2>Total Billing by Hospital, Stacked by Insurance Provider</h2>
+<div id="controls">
+  <label><strong>Medical Condition: </strong>
+    <select id="conditionSel"></select>
+  </label>
+</div>
+<div id="chart"></div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const margin = {top: 30, right: 220, bottom: 130, left: 90};
+const W = 900, H = 500;
+const w = W - margin.left - margin.right;
+const h = H - margin.top - margin.bottom;
+
+const svg = d3.select("#chart").append("svg")
+  .attr("width", W).attr("height", H)
+  .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+const tooltip = d3.select("#tooltip");
+const color = d3.scaleOrdinal(d3.schemeTableau10);
+
+// Populate dropdown from data
+const conditions = Object.keys(VIZ5_DATA).sort();
+const sel = d3.select("#conditionSel");
+conditions.forEach(c => sel.append("option").text(c).attr("value", c));
+
+let hiddenProviders = new Set();
+
+function render(condition) {
+  svg.selectAll("*").remove();
+
+  const records = VIZ5_DATA[condition]; // [{hospital, insurance_provider, billing_amount}]
+
+  const providers = [...new Set(records.map(d => d.insurance_provider))].sort();
+  color.domain(providers);
+
+  // Pivot to stack format
+  const hospitalMap = {};
+  records.forEach(d => {
+    if (!hospitalMap[d.hospital]) hospitalMap[d.hospital] = { hospital: d.hospital };
+    hospitalMap[d.hospital][d.insurance_provider] = d.billing_amount;
+  });
+  const stackData = Object.values(hospitalMap);
+  providers.forEach(p => stackData.forEach(d => { if (!d[p]) d[p] = 0; }));
+
+  const visibleProviders = providers.filter(p => !hiddenProviders.has(p));
+  const stack = d3.stack().keys(visibleProviders)(stackData);
+
+  const x = d3.scaleBand()
+    .domain(stackData.map(d => d.hospital))
+    .range([0, w]).padding(0.25);
+
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(stackData, d => d3.sum(visibleProviders, p => d[p]))])
+    .nice().range([h, 0]);
+
+  // Axes
+  svg.append("g").attr("transform", `translate(0,${h})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+    .attr("transform", "rotate(-35)")
+    .style("text-anchor", "end")
+    .style("font-size", "10px");
+
+  svg.append("g")
+    .call(d3.axisLeft(y).tickFormat(d => `$${d3.format(",.0f")(d)}`));
+
+  // Axis labels
+  svg.append("text")
+    .attr("x", w / 2).attr("y", h + 120)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px").text("Hospital");
+
+  svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -h / 2).attr("y", -70)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px").text("Avg Billing Amount ($)");
+
+  // Bars
+  svg.selectAll(".layer").data(stack).join("g")
+    .attr("class", "layer")
+    .attr("fill", d => color(d.key))
+    .selectAll("rect")
+    .data(d => d.map(v => ({ ...v, key: d.key })))
+    .join("rect")
+    .attr("class", "bar")
+    .attr("x", d => x(d.data.hospital))
+    .attr("y", d => y(d[1]))
+    .attr("height", d => Math.max(0, y(d[0]) - y(d[1])))
+    .attr("width", x.bandwidth())
+    .on("mouseover", (event, d) => {
+      tooltip.style("display", "block")
+        .html(`<strong>${d.data.hospital}</strong><br>
+               Insurance: ${d.key}<br>
+               Avg Billing: $${d3.format(",.0f")(d[1] - d[0])}`);
+    })
+    .on("mousemove", e => {
+      tooltip.style("left", (e.pageX + 12) + "px").style("top", (e.pageY - 28) + "px");
+    })
+    .on("mouseout", () => tooltip.style("display", "none"));
+
+  // Legend
+  const legend = svg.append("g").attr("transform", `translate(${w + 20}, 0)`);
+  providers.forEach((p, i) => {
+    const item = legend.append("g")
+      .attr("class", `legend-item${hiddenProviders.has(p) ? " faded" : ""}`)
+      .attr("transform", `translate(0, ${i * 26})`)
+      .on("click", () => {
+        if (hiddenProviders.has(p)) hiddenProviders.delete(p);
+        else hiddenProviders.add(p);
+        render(document.getElementById("conditionSel").value);
+      });
+    item.append("rect").attr("width", 14).attr("height", 14).attr("fill", color(p));
+    item.append("text").attr("x", 20).attr("y", 11).text(p).style("font-size", "12px");
+  });
+}
+
+render(conditions[0]);
+sel.on("change", function () {
+  hiddenProviders.clear();
+  render(this.value);
+});
+</script>
+</body>
+</html>
