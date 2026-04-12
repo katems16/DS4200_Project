@@ -34,8 +34,7 @@
         <b>Research Question: How do billing costs vary among hospitals in relation to the insurance provider?</b>
         </h3>
         
-        <br><br>
-        <h3 style = "color:black;font-size: 22px;">
+        <h3 style = "color:black;font-size: 18px;">
         Healthcare has become a highly-contested, highly-politicized topic in the United States due to the notoriously high healthcare costs. 
         Private equity relationships with hospitals, rising inflation, and government policies have only exacerbated this problem. There are many 
         factors in the final medical bill issued including the specifics of hospital, condition, and insurance provider. In this project, we 
@@ -54,15 +53,12 @@
                 <br><br>
             <li> This dataset was sourced from Kaggle, and it displays synthetically-derived data for many different healthcare metrics across thousands of hospital stays. </li>
                 <br>
-            <li> It contains many categorical features such as insurance provider, medical condition, patient names, and patient gender.
+            <li> The dimensions of the cleaned, pre-processed dataframe is 55500 x 21. It contains 10,000 synthetic patient healthcare records generated using Python’s Faker library to simulate real-world hospital data while avoiding HIPAA or privacy concerns. 
+                The dataset includes 15 attributes describing patient demographics, clinical conditions, hospital admission details, and treatment outcomes. The attributes include categorical, discrete, and continuous variables. Categorical features include insurance provider, medical condition, patient names, and patient gender.
         Discrete values include year of hospital stay, patient age, date of admission, and discharge date. Continuous values include the daily billing and billing amounts. </li>
                 <br>
-            <li> The dimensions of the cleaned, pre-processed dataframe is 55500 x 21.</li>
-                <br>
             <li> The data is synthetically-derived, which does not always accurately reflect organic, real-world data.  </li>
-                <br>
-            <li> (insert explanation of pre-processing) </li>
-                <br>
+    
         </ul>
         
         <a href="https://www.kaggle.com/datasets/prasad22/healthcare-dataset" style="color: darkblue; font-weight: bold;font-size: 17px;">
@@ -153,6 +149,26 @@
                 the length of each hospital stay, these singificant disparities show how individual hospitals may have varying negotiated rates with insurance companies. 
             </li>
                 <br>
+            <li> The interactive heatmap reveals that obesity consistently generates the highest average billing costs across nearly all insurance providers, with Cigna and Blue Cross
+reaching the highest values at approximately $26,100. Cancer, by contrast, tends to
+produce the lowest average billing, particularly under UnitedHealthcare and Aetna.
+Crucially, no single insurance provider is uniformly the most or least expensive.
+The interaction between the specific condition and the specific provider is what
+drives cost variation. This challenges the assumption that choosing one provider over
+another guarantees lower costs, and instead suggests that the nature of the medical
+condition itself plays a major role in determining what patients are billed. </li>
+<br>
+<li> The bar and bubble interactive visualization further reinforces that the 0–17 age
+group is a significant outlier in billing patterns. While adult age groups cluster
+tightly around $25,000 regardless of provider, pediatric billing shows much wider
+Variation. For example, Aetna bills nearly $30,600 for this group while Blue Cross bills only
+$24,600, a difference of roughly $6,000 for the same age group. In the bubble view,
+the size disparity between obesity and cancer bubbles makes clear that condition
+severity and treatment complexity, not just provider choice, are primary cost
+drivers. This underscores the need for greater pricing transparency, particularly for
+families with young children navigating insurance options. </li>
+<br>
+
             <li> Overall, all three of the visualizations highlight major problems with affordable access to care. Medicare and Aetna appear to have the highest billing costs observed across
                the visualizations. With Medicare in mind, this suggests that elderly citizens may experience higher hospital billing costs. By continuing to shed light on this issue,
                 we can hope that a change comes to protect the healthcare access of all people in the United States, especially the elderly. </li>
@@ -162,9 +178,9 @@
                 Although synthetic data can sometimes help depcict accurate statistical correlations and distributions, it will not be able to capture outliers
                 that occur in real data as well as more complex relationships. </li>
                 <br>
-            <li> It would also be worthwhile to depict any geospatial relationships among this data, which could potentially reflect economy shift across different parts
-                of the country or even the world.
-            </li>
+            <li> It would also be worthwhile to depict any geospatial relationships among this data, which could potentially reflect the economy across different parts of the
+                country or even the world. Additionally, incorporating patient outcome data alongside billing information could help determine whether higher-cost providers and 
+                conditions actually correspond to better health outcomes — a critical question for evaluating whether the financial burden placed on patients is justified. </li>
         </ul>   
     </div>
     
