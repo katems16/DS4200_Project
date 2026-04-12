@@ -30,12 +30,19 @@
     </h4>
 
     <div>
-        <h3 style = "color:black; font-size: 26px;">
+        <h3 style = "color:darkred; font-size: 26px;">
             
         <b>Research Question: How do billing costs vary among hospitals in relation to the insurance provider?</b>
-        <br>
-        (insert topic explanation)
-            
+        <br><br>
+        Healthcare has become a highly-contested, highly-politicized topic in the United States due to the notoriously high healthcare costs. 
+        Private equity relationships with hospitals, rising inflation, and government policies have only exacerbated this problem. There are many 
+        factors in the final medical bill issued including the specifics of hospital, condition, and insurance provider. In this project, we 
+        investigate how billing costs for identical medical conditions influence these variations. Using this dataset, we will compare and analyze 
+            charges across institutions to assess its potential impact on healthcare accessibility while considering insurance type and identifying 
+            the patterns and potential drivers of the cost variation. Similar studies reveal the magnitude of this issue with over 70% of Medicare 
+            and uninsured admits being classified as emergencies (Burke et al., 2017). While individuals with private health insurance premiums under 
+            the assumption that insurers consistently negotiate the lowest possible service rates to be untrue when final billing statements are compared 
+            (Trinity College, 2021).        
         </h3>
     </div>
 
@@ -50,7 +57,7 @@
                 <br>
             <li> The dimensions of the cleaned, pre-processed dataframe is 55500 x 21.</li>
                 <br>
-            <li> The data is synthetically-derived </li>
+            <li> The data is synthetically-derived, which does not always accurately reflect organic, real-world data.  </li>
                 <br>
             <li> (insert explanation of pre-processing) </li>
                 <br>
@@ -61,8 +68,8 @@
         
         <br><br>
         
-        <img src="webpage/DS4200_proj_dataset1.jpg" alt="Photo" height="170">
-        <img src="webpage/DS4200_proj_dataset2.jpg" alt="Photo" height="170">
+        <img src="webpage/DS4200_proj_dataset1.jpg" alt="Photo" height="190">
+        <img src="webpage/DS4200_proj_dataset2.jpg" alt="Photo" height="190">
     </div>
 
     <div>
@@ -93,7 +100,7 @@
         <h3 style = "color:black; font-size: 26px;">
             <u> Interactive Visualization </u>
             <br><br>
-            <iframe src="interactive_viz/interactive_stacked_bar.html" width="100%" height="500"></iframe>
+            <iframe src="interactive_viz/interactive_stacked_bar.html" width=1000 height="500"></iframe>
             
             <h5>
                 (discuss how it was designed and describe the interactive features)
@@ -104,17 +111,39 @@
      <div>
         <ul class = "A"> 
             <u>Conclusion of Findings</u>
-        
-            <li> line 1</li>
                 <br>
-            <li> line 2</li>
+            <li> The initial static visualization demonstrates how age group may be correlated with the billing costs per insurance type. From this, it is reasonable to
+            conclude that there is not a significant deviation in costs according to age except for the youngest age group (0-17 years old), where blue cross costs are 
+                relatively higher and aetna costs are significantly lower.</li>
                 <br>
-            <li> Future considerations for this kind of data investigatin may include </li>
+            <li> From the second static visualization, we can see the rise and fall of billing costs for treatment of a single condition each year between 2019 and 2024. 
+                These changing rates could potentially reflect changes in the economy, which should especially be taken into account for 2020-2021 during the COVID-19 pandemic.
+                During these years, we can see the billing costs noticeably increase for each medical condition. This can be seen with diabetes, asthma, and hypertension.
+            </li>
+                <br>
+            <li> The interactive visualizatin demonstrates how each hospital charges for treatment of the same condition based on the insurance provider.
+            It is clear that not every hospital accepts the majority of insurance types, which is seen in Wilson PLC Hospital and INC Jackson Hospital. 
+                Medical care for the same condition for the same providers can vary by up to $30,0000 according to the bar chart. Although it is important to consider
+                the length of each hospital stay, these singificant disparities show how individual hospitals may have varying negotiated rates with insurance companies. 
+            </li>
+                <br>
+            <li> Overall, all three of the visualizations highlight major problems with affordable access to care. Medicare and Aetna appear to have the highest billing costs obseved across
+               the visualizations. With Medicare in mind, this suggests that elderly citizens may experience higher hospital billing costs. By continuing to shed light on this issue,
+                we can hope that a change comes to protect the healthcare access of all people in the United States, especially the elderly. </li>
+                <br>
+            <li> Future considerations for this kind of data investigatin may include using real-world data to compare to this synthetic data. 
+                It may be important to consider this research question using organic data since synthetic data oftentimes is not reproducible using real-world data. 
+                Although synthetic data can sometimes help depcict accurate statistical correlations and distributions, it will not be able to capture outliers
+                that occur in real data as well as more complex relationships. </li>
+                <br>
+            <li> It would also be worthwhile to depict any geospatial relationships among this data, which could potentially reflect the economy across different parts
+                of the country or even the world.
+            </li>
         </ul>   
     </div>
     
     <div>
-        <h3 style = "color:darkred; font-size: 50px;">   
+        <h3 style = "color:darkred; font-size: 26px;">   
         <b>Thank You!</b>     
         </h3>  
     </div>
