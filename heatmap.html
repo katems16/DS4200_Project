@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healthcare Billing Heatmap</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      padding: 2rem;
+    }
+
+    h1 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #888780; margin-bottom: 6px; }
+
+    .instruction-box {
+      background: #f1efe8;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #5f5e5a;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+      max-width: 760px;
+    }
+    .instruction-box strong { font-weight: 500; color: #1a1a1a; }
+
+    #heatmap-container {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    #heatmap svg { display: block; }
+
+    .cell { cursor: pointer; transition: opacity 0.15s; }
+    .cell:hover { opacity: 0.82; }
+    .cell.selected { stroke: #1a1a1a; stroke-width: 2.5px; }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #ffffff;
+      border: 0.5px solid #c0bfba;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #1a1a1a;
+      line-height: 1.7;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-width: 160px;
+    }
+    #tooltip .tt-title { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+    #tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+    #tooltip .tt-label { color: #888780; }
+    #tooltip .tt-val   { font-weight: 500; }
+
+    /* Detail panel */
+    #detail-panel {
+      display: none;
+      background: #ffffff;
+      border: 0.5px solid #c0bfba;
+      border-radius: 12px;
+      padding: 1.25rem;
+      min-width: 260px;
+      max-width: 300px;
+      flex-shrink: 0;
+    }
+    #detail-panel.visible { display: block; }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .panel-title { font-size: 14px; font-weight: 500; line-height: 1.4; }
+    .panel-close {
+      cursor: pointer; font-size: 16px; color: #888780;
+      background: none; border: none; padding: 0; line-height: 1;
+    }
+    .panel-close:hover { color: #1a1a1a; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .stat-card {
+      background: #f1efe8;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .stat-label { font-size: 11px; color: #888780; margin-bottom: 2px; }
+    .stat-value { font-size: 18px; font-weight: 500; color: #1a1a1a; }
+    .stat-value.highlight { color: #185FA5; }
+
+    .bar-section { margin-bottom: 1rem; }
+    .bar-section-title {
+      font-size: 11px; font-weight: 500; color: #888780;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .bar-row { margin-bottom: 6px; }
+    .bar-row-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #5f5e5a; margin-bottom: 3px;
+    }
+    .bar-track {
+      height: 6px; background: #e8e6df;
+      border-radius: 3px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* Legend */
+    #legend {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #888780;
+    }
+    #legend-gradient {
+      width: 160px; height: 10px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Average Billing by Condition and Insurance Provider</h1>
+<p class="subtitle">Heatmap · color encodes average billing amount ($)</p>
+
+<div class="instruction-box">
+  <strong>How to use:</strong>
+  <strong>Hover</strong> any cell to see a quick summary tooltip.
+  <strong>Click</strong> any cell to open a detailed drill-down panel showing patient count, average length of stay, admission types, and test result breakdown for that condition–provider pair.
+  Click the <strong>×</strong> or click another cell to update the panel.
+</div>
+
+<div id="heatmap-container">
+  <div id="heatmap"></div>
+  <div id="detail-panel">
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title">—</div>
+      <button class="panel-close" id="panel-close">×</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Avg billing</div>
+        <div class="stat-value highlight" id="p-billing">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Patients</div>
+        <div class="stat-value" id="p-count">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg stay</div>
+        <div class="stat-value" id="p-los">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg age</div>
+        <div class="stat-value" id="p-age">—</div>
+      </div>
+    </div>
+
+    <div class="bar-section">
+      <div class="bar-section-title">Admission type</div>
+      <div class="bar-row">
+        <div class="bar-row-label"><span>Elective</span><span id="p-adm-el">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-adm-el" style="background:#378ADD;width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-label"><span>Emergency</span><span id="p-adm-em">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-adm-em" style="background:#D85A30;width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-label"><span>Urgent</span><span id="p-adm-ur">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-adm-ur" style="background:#BA7517;width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="bar-section">
+      <div class="bar-section-title">Test results</div>
+      <div class="bar-row">
+        <div class="bar-row-label"><span>Normal</span><span id="p-t-no">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-t-no" style="background:#3B6D11;width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-label"><span>Abnormal</span><span id="p-t-ab">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-t-ab" style="background:#A32D2D;width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-label"><span>Inconclusive</span><span id="p-t-in">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-t-in" style="background:#888780;width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="legend">
+  <span>Low</span>
+  <canvas id="legend-gradient" width="160" height="10"></canvas>
+  <span>High</span>
+</div>
+
+<div id="tooltip">
+  <div class="tt-title" id="tt-title"></div>
+  <div class="tt-row"><span class="tt-label">Avg billing</span><span class="tt-val" id="tt-billing"></span></div>
+  <div class="tt-row"><span class="tt-label">Patients</span><span class="tt-val" id="tt-count"></span></div>
+  <div class="tt-row"><span class="tt-label">Avg stay</span><span class="tt-val" id="tt-los"></span></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const DETAIL = {"arthritis|aetna":{"avg_billing":25478.95,"count":1832,"avg_los":15.1,"avg_age":51.6,"adm_elective":33.8,"adm_emergency":33.1,"adm_urgent":33.1,"test_normal":31.1,"test_abnormal":35.6,"test_inconclusive":33.2},"arthritis|blue cross":{"avg_billing":25792.79,"count":1852,"avg_los":15.8,"avg_age":51.6,"adm_elective":34.8,"adm_emergency":32.5,"adm_urgent":32.7,"test_normal":34.3,"test_abnormal":31.9,"test_inconclusive":33.8},"arthritis|cigna":{"avg_billing":25318.17,"count":1900,"avg_los":15.3,"avg_age":51.5,"adm_elective":32.9,"adm_emergency":35.5,"adm_urgent":31.6,"test_normal":32.9,"test_abnormal":34.8,"test_inconclusive":32.2},"arthritis|medicare":{"avg_billing":25272.08,"count":1851,"avg_los":15.8,"avg_age":51.6,"adm_elective":33.1,"adm_emergency":32.1,"adm_urgent":34.8,"test_normal":32.0,"test_abnormal":34.5,"test_inconclusive":33.5},"arthritis|unitedhealthcare":{"avg_billing":25627.49,"count":1873,"avg_los":15.5,"avg_age":51.5,"adm_elective":31.1,"adm_emergency":33.6,"adm_urgent":35.3,"test_normal":32.4,"test_abnormal":34.4,"test_inconclusive":33.2},"asthma|aetna":{"avg_billing":25846.96,"count":1740,"avg_los":15.8,"avg_age":51.8,"adm_elective":34.4,"adm_emergency":33.5,"adm_urgent":32.1,"test_normal":33.2,"test_abnormal":33.1,"test_inconclusive":33.7},"asthma|blue cross":{"avg_billing":25141.78,"count":1835,"avg_los":15.8,"avg_age":52.1,"adm_elective":33.5,"adm_emergency":33.3,"adm_urgent":33.2,"test_normal":34.3,"test_abnormal":32.6,"test_inconclusive":33.1},"asthma|cigna":{"avg_billing":25610.47,"count":1907,"avg_los":15.5,"avg_age":51.5,"adm_elective":31.7,"adm_emergency":32.0,"adm_urgent":36.3,"test_normal":34.8,"test_abnormal":32.1,"test_inconclusive":33.1},"asthma|medicare":{"avg_billing":25765.96,"count":1833,"avg_los":15.8,"avg_age":50.7,"adm_elective":36.0,"adm_emergency":31.5,"adm_urgent":32.6,"test_normal":33.3,"test_abnormal":32.8,"test_inconclusive":33.9},"asthma|unitedhealthcare":{"avg_billing":25819.63,"count":1870,"avg_los":15.6,"avg_age":51.8,"adm_elective":33.4,"adm_emergency":33.2,"adm_urgent":33.4,"test_normal":35.6,"test_abnormal":33.3,"test_inconclusive":31.1},"cancer|aetna":{"avg_billing":24923.41,"count":1819,"avg_los":15.7,"avg_age":51.8,"adm_elective":34.5,"adm_emergency":33.2,"adm_urgent":32.3,"test_normal":33.3,"test_abnormal":32.7,"test_inconclusive":34.1},"cancer|blue cross":{"avg_billing":25100.9,"count":1808,"avg_los":15.6,"avg_age":51.7,"adm_elective":34.3,"adm_emergency":31.2,"adm_urgent":34.4,"test_normal":32.6,"test_abnormal":32.9,"test_inconclusive":34.5},"cancer|cigna":{"avg_billing":25582.05,"count":1864,"avg_los":15.4,"avg_age":52.1,"adm_elective":32.8,"adm_emergency":33.7,"adm_urgent":33.5,"test_normal":32.3,"test_abnormal":34.3,"test_inconclusive":33.4},"cancer|medicare":{"avg_billing":25337.97,"count":1866,"avg_los":15.4,"avg_age":51.0,"adm_elective":33.8,"adm_emergency":32.6,"adm_urgent":33.5,"test_normal":33.6,"test_abnormal":34.6,"test_inconclusive":31.8},"cancer|unitedhealthcare":{"avg_billing":24857.85,"count":1870,"avg_los":15.3,"avg_age":51.2,"adm_elective":35.1,"adm_emergency":32.5,"adm_urgent":32.4,"test_normal":33.4,"test_abnormal":34.5,"test_inconclusive":32.1},"diabetes|aetna":{"avg_billing":25565.19,"count":1842,"avg_los":15.5,"avg_age":51.3,"adm_elective":34.3,"adm_emergency":32.6,"adm_urgent":33.1,"test_normal":32.8,"test_abnormal":33.8,"test_inconclusive":33.4},"diabetes|blue cross":{"avg_billing":25820.05,"count":1860,"avg_los":15.2,"avg_age":52.1,"adm_elective":31.2,"adm_emergency":34.4,"adm_urgent":34.4,"test_normal":32.7,"test_abnormal":33.3,"test_inconclusive":33.9},"diabetes|cigna":{"avg_billing":25651.21,"count":1893,"avg_los":15.0,"avg_age":50.9,"adm_elective":32.1,"adm_emergency":31.2,"adm_urgent":36.7,"test_normal":32.5,"test_abnormal":35.0,"test_inconclusive":32.4},"diabetes|medicare":{"avg_billing":25671.45,"count":1903,"avg_los":15.8,"avg_age":51.9,"adm_elective":31.2,"adm_emergency":33.4,"adm_urgent":35.5,"test_normal":33.4,"test_abnormal":34.6,"test_inconclusive":32.0},"diabetes|unitedhealthcare":{"avg_billing":25477.77,"count":1806,"avg_los":15.6,"avg_age":51.7,"adm_elective":35.7,"adm_emergency":30.5,"adm_urgent":33.8,"test_normal":34.7,"test_abnormal":33.4,"test_inconclusive":31.9},"hypertension|aetna":{"avg_billing":25896.21,"count":1876,"avg_los":15.5,"avg_age":52.1,"adm_elective":35.4,"adm_emergency":33.3,"adm_urgent":31.3,"test_normal":34.6,"test_abnormal":31.8,"test_inconclusive":33.6},"hypertension|blue cross":{"avg_billing":25695.86,"count":1813,"avg_los":15.1,"avg_age":51.3,"adm_elective":35.1,"adm_emergency":32.6,"adm_urgent":32.3,"test_normal":34.5,"test_abnormal":31.9,"test_inconclusive":33.6},"hypertension|cigna":{"avg_billing":24860.46,"count":1821,"avg_los":15.8,"avg_age":51.8,"adm_elective":35.1,"adm_emergency":31.4,"adm_urgent":33.5,"test_normal":32.7,"test_abnormal":33.2,"test_inconclusive":34.2},"hypertension|medicare":{"avg_billing":25811.98,"count":1847,"avg_los":15.4,"avg_age":52.4,"adm_elective":32.5,"adm_emergency":33.9,"adm_urgent":33.6,"test_normal":35.3,"test_abnormal":32.9,"test_inconclusive":31.8},"hypertension|unitedhealthcare":{"avg_billing":25215.65,"count":1888,"avg_los":15.5,"avg_age":51.1,"adm_elective":36.0,"adm_emergency":31.2,"adm_urgent":32.8,"test_normal":32.8,"test_abnormal":33.2,"test_inconclusive":34.0},"obesity|aetna":{"avg_billing":25611.91,"count":1804,"avg_los":15.2,"avg_age":51.5,"adm_elective":34.0,"adm_emergency":36.4,"adm_urgent":29.7,"test_normal":34.1,"test_abnormal":32.7,"test_inconclusive":33.2},"obesity|blue cross":{"avg_billing":26100.79,"count":1891,"avg_los":15.6,"avg_age":51.4,"adm_elective":34.3,"adm_emergency":32.8,"adm_urgent":32.9,"test_normal":31.6,"test_abnormal":34.7,"test_inconclusive":33.6},"obesity|cigna":{"avg_billing":26117.0,"count":1864,"avg_los":15.8,"avg_age":50.9,"adm_elective":33.3,"adm_emergency":32.2,"adm_urgent":34.5,"test_normal":33.4,"test_abnormal":33.6,"test_inconclusive":33.0},"obesity|medicare":{"avg_billing":25838.73,"count":1854,"avg_los":15.6,"avg_age":50.8,"adm_elective":31.4,"adm_emergency":34.2,"adm_urgent":34.4,"test_normal":32.4,"test_abnormal":34.2,"test_inconclusive":33.4},"obesity|unitedhealthcare":{"avg_billing":25339.58,"count":1818,"avg_los":15.2,"avg_age":51.7,"adm_elective":31.8,"adm_emergency":33.8,"adm_urgent":34.4,"test_normal":34.2,"test_abnormal":34.3,"test_inconclusive":31.5}};
+
+const conditions = ['arthritis','asthma','cancer','diabetes','hypertension','obesity'];
+const providers  = ['aetna','blue cross','cigna','medicare','unitedhealthcare'];
+
+const providerLabel = {
+  'aetna': 'Aetna',
+  'blue cross': 'Blue Cross',
+  'cigna': 'Cigna',
+  'medicare': 'Medicare',
+  'unitedhealthcare': 'UnitedHealthcare'
+};
+
+const allValues = Object.values(DETAIL).map(d => d.avg_billing);
+const minVal = d3.min(allValues);
+const maxVal = d3.max(allValues);
+
+const colorScale = d3.scaleSequential()
+  .domain([minVal, maxVal])
+  .interpolator(d3.interpolate('#C8E4F8', '#0C447C'));
+
+const margin = { top: 40, right: 20, bottom: 30, left: 130 };
+const cellW  = 90;
+const cellH  = 52;
+const width  = providers.length  * cellW + margin.left + margin.right;
+const height = conditions.length * cellH + margin.top  + margin.bottom;
+
+const svg = d3.select('#heatmap')
+  .append('svg')
+  .attr('width',  width)
+  .attr('height', height);
+
+const g = svg.append('g')
+  .attr('transform', `translate(${margin.left},${margin.top})`);
+
+const xScale = d3.scaleBand().domain(providers).range([0, providers.length * cellW]).padding(0.06);
+const yScale = d3.scaleBand().domain(conditions).range([0, conditions.length * cellH]).padding(0.06);
+
+/* Column headers */
+g.selectAll('.col-label')
+  .data(providers)
+  .join('text')
+  .attr('class', 'col-label')
+  .attr('x', d => xScale(d) + xScale.bandwidth() / 2)
+  .attr('y', -12)
+  .attr('text-anchor', 'middle')
+  .attr('font-size', 11)
+  .attr('fill', '#5f5e5a')
+  .text(d => providerLabel[d]);
+
+/* Row labels */
+g.selectAll('.row-label')
+  .data(conditions)
+  .join('text')
+  .attr('class', 'row-label')
+  .attr('x', -10)
+  .attr('y', d => yScale(d) + yScale.bandwidth() / 2 + 1)
+  .attr('text-anchor', 'end')
+  .attr('dominant-baseline', 'middle')
+  .attr('font-size', 12)
+  .attr('fill', '#1a1a1a')
+  .text(d => d.charAt(0).toUpperCase() + d.slice(1));
+
+/* Cells */
+const tooltip = document.getElementById('tooltip');
+let selectedCell = null;
+
+const cellData = [];
+conditions.forEach(cond => {
+  providers.forEach(prov => {
+    const key = `${cond}|${prov}`;
+    cellData.push({ cond, prov, key, ...DETAIL[key] });
+  });
+});
+
+g.selectAll('.cell')
+  .data(cellData)
+  .join('rect')
+  .attr('class', 'cell')
+  .attr('x', d => xScale(d.prov))
+  .attr('y', d => yScale(d.cond))
+  .attr('width',  xScale.bandwidth())
+  .attr('height', yScale.bandwidth())
+  .attr('rx', 5)
+  .attr('fill', d => colorScale(d.avg_billing))
+  .on('mousemove', function(event, d) {
+    document.getElementById('tt-title').textContent =
+      `${d.cond.charAt(0).toUpperCase()+d.cond.slice(1)} · ${providerLabel[d.prov]}`;
+    document.getElementById('tt-billing').textContent = '$' + Math.round(d.avg_billing).toLocaleString();
+    document.getElementById('tt-count').textContent   = d.count.toLocaleString();
+    document.getElementById('tt-los').textContent     = d.avg_los + ' days';
+    tooltip.style.display = 'block';
+    tooltip.style.left = (event.clientX + 14) + 'px';
+    tooltip.style.top  = (event.clientY - 10) + 'px';
+  })
+  .on('mouseleave', function() {
+    tooltip.style.display = 'none';
+  })
+  .on('click', function(event, d) {
+    tooltip.style.display = 'none';
+    if (selectedCell) d3.select(selectedCell).classed('selected', false);
+    if (selectedCell === this) { selectedCell = null; closePanel(); return; }
+    selectedCell = this;
+    d3.select(this).classed('selected', true);
+    openPanel(d);
+  });
+
+/* Billing value labels inside cells */
+g.selectAll('.cell-label')
+  .data(cellData)
+  .join('text')
+  .attr('class', 'cell-label')
+  .attr('x', d => xScale(d.prov) + xScale.bandwidth() / 2)
+  .attr('y', d => yScale(d.cond) + yScale.bandwidth() / 2 + 1)
+  .attr('text-anchor', 'middle')
+  .attr('dominant-baseline', 'middle')
+  .attr('font-size', 11)
+  .attr('font-weight', 500)
+  .attr('fill', d => d.avg_billing > (minVal + (maxVal - minVal) * 0.55) ? '#ffffff' : '#0C447C')
+  .attr('pointer-events', 'none')
+  .text(d => '$' + (Math.round(d.avg_billing) / 1000).toFixed(1) + 'k');
+
+/* Legend gradient */
+const lgCanvas = document.getElementById('legend-gradient');
+const lgCtx    = lgCanvas.getContext('2d');
+const lgGrad   = lgCtx.createLinearGradient(0, 0, 160, 0);
+lgGrad.addColorStop(0,   '#C8E4F8');
+lgGrad.addColorStop(0.5, '#378ADD');
+lgGrad.addColorStop(1,   '#0C447C');
+lgCtx.fillStyle = lgGrad;
+lgCtx.fillRect(0, 0, 160, 10);
+
+/* Panel functions */
+function setBar(fillId, labelId, value) {
+  document.getElementById(fillId).style.width  = value + '%';
+  document.getElementById(labelId).textContent = value + '%';
+}
+
+function openPanel(d) {
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('visible');
+
+  document.getElementById('panel-title').textContent =
+    `${d.cond.charAt(0).toUpperCase()+d.cond.slice(1)} · ${providerLabel[d.prov]}`;
+
+  document.getElementById('p-billing').textContent = '$' + Math.round(d.avg_billing).toLocaleString();
+  document.getElementById('p-count').textContent   = d.count.toLocaleString();
+  document.getElementById('p-los').textContent     = d.avg_los + ' days';
+  document.getElementById('p-age').textContent     = d.avg_age + ' yrs';
+
+  setBar('b-adm-el', 'p-adm-el', d.adm_elective);
+  setBar('b-adm-em', 'p-adm-em', d.adm_emergency);
+  setBar('b-adm-ur', 'p-adm-ur', d.adm_urgent);
+
+  setBar('b-t-no', 'p-t-no', d.test_normal);
+  setBar('b-t-ab', 'p-t-ab', d.test_abnormal);
+  setBar('b-t-in', 'p-t-in', d.test_inconclusive);
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('visible');
+  if (selectedCell) { d3.select(selectedCell).classed('selected', false); selectedCell = null; }
+}
+
+document.getElementById('panel-close').addEventListener('click', closePanel);
+</script>
+</body>
+</html>
