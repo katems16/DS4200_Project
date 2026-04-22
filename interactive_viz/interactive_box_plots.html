@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Interactive Box Plot</title>
+
+<style>
+body {
+    font-family: 'Open Sans', sans-serif;
+    background: #f9f9f9;
+    padding: 20px;
+}
+
+#chart-container {
+    background: #fff;
+    border-radius: 6px;
+    padding: 20px;
+    width: 960px;
+    margin: auto;
+}
+
+#legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.legend-item.inactive {
+    opacity: 0.3;
+}
+
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+#bp-tooltip {
+    position: absolute;
+    background: rgba(25,25,25,0.9);
+    color: #fff;
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<h2 style="text-align:center;">
+Billing Cost by Admission Type
+</h2>
+
+<div id="chart-container">
+    <div id="legend"></div>
+    <svg id="bp-chart" width="924" height="480"></svg>
+</div>
+
+<div id="bp-tooltip"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+    const RAW = {"elective": {"aetna": {"min": -1130.0, "q1": 13161.14, "median": 25748.79, "q3": 37186.61, "max": 51899.02, "outliers": [], "n": 3754}, "blue cross": {"min": -1660.01, "q1": 13483.82, "median": 25562.97, "q3": 37988.72, "max": 52764.28, "outliers": [], "n": 3747}, "cigna": {"min": -1520.42, "q1": 13527.8, "median": 26459.5, "q3": 38248.39, "max": 52024.73, "outliers": [], "n": 3709}, "medicare": {"min": -1277.65, "q1": 13355.78, "median": 25533.82, "q3": 37977.44, "max": 51633.86, "outliers": [], "n": 3679}, "unitedhealthcare": {"min": -872.23, "q1": 12787.55, "median": 25045.09, "q3": 37682.01, "max": 51350.51, "outliers": [], "n": 3766}}, "emergency": {"aetna": {"min": -1316.62, "q1": 12929.55, "median": 25401.53, "q3": 37423.61, "max": 52181.84, "outliers": [], "n": 3675}, "blue cross": {"min": -317.63, "q1": 13515.74, "median": 25534.25, "q3": 37692.72, "max": 52271.66, "outliers": [], "n": 3629}, "cigna": {"min": -892.27, "q1": 12991.17, "median": 24838.28, "q3": 37524.56, "max": 52102.24, "outliers": [], "n": 3677}, "medicare": {"min": -855.8, "q1": 13275.07, "median": 25677.06, "q3": 37684.58, "max": 52092.67, "outliers": [], "n": 3675}, "unitedhealthcare": {"min": -577.73, "q1": 13428.34, "median": 25670.64, "q3": 38138.43, "max": 51214.83, "outliers": [], "n": 3613}}, "urgent": {"aetna": {"min": -2008.49, "q1": 13811.71, "median": 26223.17, "q3": 37990.77, "max": 52211.85, "outliers": [], "n": 3484}, "blue cross": {"min": -576.73, "q1": 13327.61, "median": 25704.99, "q3": 38029.29, "max": 51975.97, "outliers": [], "n": 3683}, "cigna": {"min": -1049.01, "q1": 12724.44, "median": 25371.04, "q3": 37949.04, "max": 52170.04, "outliers": [], "n": 3863}, "medicare": {"min": -857.13, "q1": 13649.77, "median": 25545.9, "q3": 37644.18, "max": 51661.01, "outliers": [], "n": 3800}, "unitedhealthcare": {"min": -1428.84, "q1": 12689.33, "median": 25006.06, "q3": 37795.12, "max": 52373.03, "outliers": [], "n": 3746}}};
+
+    const PROVIDERS  = ["aetna", "blue cross", "cigna", "medicare", "unitedhealthcare"];
+    const ADMISSIONS = ["elective", "emergency", "urgent"];
+
+    const COLORS = {
+        "aetna":            "#4e79a7",
+        "blue cross":       "#f28e2b",
+        "cigna":            "#e15759",
+        "medicare":         "#76b7b2",
+        "unitedhealthcare": "#59a14f"
+    };
+
+    const LABELS = {
+        "aetna":            "Aetna",
+        "blue cross":       "Blue Cross",
+        "cigna":            "Cigna",
+        "medicare":         "Medicare",
+        "unitedhealthcare": "UnitedHealthcare"
+    };
+
+    // Active state for each provider
+    const active = { "aetna":true, "blue cross":true, "cigna":true, "medicare":true, "unitedhealthcare":true };
+
+    // ── SVG setup ─────────────────────────────────────────────────────────────
+    const svg    = document.getElementById('bp-chart');
+    const W      = +svg.getAttribute('width');
+    const H      = +svg.getAttribute('height');
+    const MARGIN = { top: 20, right: 20, bottom: 60, left: 80 };
+    const PW     = W - MARGIN.left - MARGIN.right;
+    const PH     = H - MARGIN.top  - MARGIN.bottom;
+    const NS     = 'http://www.w3.org/2000/svg';
+
+    function el(tag, attrs, parent) {
+        const e = document.createElementNS(NS, tag);
+        for (const [k,v] of Object.entries(attrs||{})) e.setAttribute(k, v);
+        if (parent) parent.appendChild(e);
+        return e;
+    }
+    function txt(content, attrs, parent) {
+        const e = el('text', attrs, parent);
+        e.textContent = content;
+        return e;
+    }
+
+    // ── Scales ────────────────────────────────────────────────────────────────
+    const Y_MIN = -3000, Y_MAX = 56000;
+    function yScale(v) {
+        return MARGIN.top + PH - (v - Y_MIN) / (Y_MAX - Y_MIN) * PH;
+    }
+
+    const ADM_COUNT  = ADMISSIONS.length;
+    const GROUP_W    = PW / ADM_COUNT;
+
+    // ── Tooltip ───────────────────────────────────────────────────────────────
+    const tooltip = document.getElementById('bp-tooltip');
+    document.addEventListener('mousemove', e => {
+        tooltip.style.left = (e.clientX + 16) + 'px';
+        tooltip.style.top  = (e.clientY - 10) + 'px';
+    });
+    function fmt(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+    // ── Legend build ──────────────────────────────────────────────────────────
+    const legendDiv = document.getElementById('legend');
+    PROVIDERS.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.id = 'leg-' + p;
+        item.innerHTML = `<div class="legend-swatch" style="background:${COLORS[p]}"></div><span>${LABELS[p]}</span>`;
+        item.addEventListener('click', () => {
+            active[p] = !active[p];
+            item.classList.toggle('inactive', !active[p]);
+            render();
+        });
+        legendDiv.appendChild(item);
+    });
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function render() {
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+        const g = el('g', { transform: `translate(0,0)` }, svg);
+
+        // ── Y gridlines + axis labels ─────────────────────────────────────────
+        const yTicks = [0, 10000, 20000, 30000, 40000, 50000];
+        yTicks.forEach(t => {
+            const y = yScale(t);
+            el('line', { x1: MARGIN.left, x2: MARGIN.left + PW, y1: y, y2: y,
+                         stroke: '#e5e5e5', 'stroke-width': 1 }, g);
+            txt(t === 0 ? '$0' : `$${t/1000}k`, {
+                x: MARGIN.left - 8, y: y + 4,
+                'text-anchor': 'end', 'font-size': 11, fill: '#666',
+                'font-family': 'Open Sans, sans-serif'
+            }, g);
+        });
+
+        // Y axis line
+        el('line', { x1: MARGIN.left, x2: MARGIN.left, y1: MARGIN.top, y2: MARGIN.top + PH,
+                     stroke: '#bbb', 'stroke-width': 1 }, g);
+
+        // Y axis label
+        const ylg = el('g', {
+            transform: `rotate(-90) translate(${-(MARGIN.top + PH/2)}, ${MARGIN.left - 60})`
+        }, g);
+        txt('Billing Amount ($)', {
+            'text-anchor': 'middle', 'font-size': 12, fill: '#444',
+            'font-family': 'Open Sans, sans-serif', 'font-weight': '600'
+        }, ylg);
+
+        // X axis line
+        el('line', {
+            x1: MARGIN.left, x2: MARGIN.left + PW,
+            y1: MARGIN.top + PH, y2: MARGIN.top + PH,
+            stroke: '#bbb', 'stroke-width': 1
+        }, g);
+
+        // ── Draw each admission group ─────────────────────────────────────────
+        const visibleProviders = PROVIDERS.filter(p => active[p]);
+        const nVis = visibleProviders.length;
+
+        ADMISSIONS.forEach((adm, ai) => {
+            const groupLeft   = MARGIN.left + ai * GROUP_W;
+            const groupCenter = groupLeft + GROUP_W / 2;
+
+            // X axis tick label
+            txt(adm.charAt(0).toUpperCase() + adm.slice(1), {
+                x: groupCenter, y: MARGIN.top + PH + 28,
+                'text-anchor': 'middle', 'font-size': 13, fill: '#333',
+                'font-family': 'Open Sans, sans-serif'
+            }, g);
+
+            // Group divider
+            if (ai > 0) {
+                el('line', {
+                    x1: groupLeft, x2: groupLeft,
+                    y1: MARGIN.top, y2: MARGIN.top + PH,
+                    stroke: '#ddd', 'stroke-dasharray': '4,3', 'stroke-width': 1
+                }, g);
+            }
+
+            if (nVis === 0) return;
+
+            const boxW   = Math.min(32, GROUP_W / (nVis + 1) - 4);
+            const halfBW = boxW / 2;
+            const spacing = GROUP_W / (nVis + 1);
+
+            visibleProviders.forEach((prov, pi) => {
+                const stats = RAW[adm]?.[prov];
+                if (!stats) return;
+
+                const cx     = groupLeft + spacing * (pi + 1);
+                const color  = COLORS[prov];
+
+                const yQ1   = yScale(stats.q1);
+                const yQ3   = yScale(stats.q3);
+                const yMed  = yScale(stats.median);
+                const yWMin = yScale(stats.min);
+                const yWMax = yScale(stats.max);
+
+                // Whisker lines
+                el('line', { x1:cx, x2:cx, y1:yWMax, y2:yQ3,
+                             stroke:color, 'stroke-width':1.5 }, g);
+                el('line', { x1:cx, x2:cx, y1:yQ1, y2:yWMin,
+                             stroke:color, 'stroke-width':1.5 }, g);
+                // Whisker caps
+                el('line', { x1:cx-halfBW*0.55, x2:cx+halfBW*0.55, y1:yWMax, y2:yWMax,
+                             stroke:color, 'stroke-width':1.5 }, g);
+                el('line', { x1:cx-halfBW*0.55, x2:cx+halfBW*0.55, y1:yWMin, y2:yWMin,
+                             stroke:color, 'stroke-width':1.5 }, g);
+
+                // IQR box (interactive)
+                const boxRect = el('rect', {
+                    x: cx - halfBW, y: yQ3,
+                    width: boxW, height: Math.max(1, yQ1 - yQ3),
+                    fill: color, 'fill-opacity': 0.35,
+                    stroke: color, 'stroke-width': 1.8,
+                    rx: 2, ry: 2,
+                    style: 'cursor:pointer;'
+                }, g);
+
+                // Median line
+                el('line', {
+                    x1: cx - halfBW, x2: cx + halfBW, y1: yMed, y2: yMed,
+                    stroke: color, 'stroke-width': 2.5
+                }, g);
+
+                // Hover
+                boxRect.addEventListener('mouseenter', () => {
+                    boxRect.setAttribute('fill-opacity', 0.65);
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML =
+                        `<b>${LABELS[prov]}</b> — <b>${adm.charAt(0).toUpperCase()+adm.slice(1)}</b><br>` +
+                        `Median: ${fmt(stats.median)}<br>` +
+                        `IQR: ${fmt(stats.q1)} – ${fmt(stats.q3)}<br>` +
+                        `Whiskers: ${fmt(stats.min)} – ${fmt(stats.max)}<br>` +
+                        `n = ${stats.n.toLocaleString()}`;
+                });
+                boxRect.addEventListener('mouseleave', () => {
+                    boxRect.setAttribute('fill-opacity', 0.35);
+                    tooltip.style.display = 'none';
+                });
+            });
+        });
+    }
+
+    render();
+</script>
+
+</body>
+</html>
