@@ -3,190 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>DS4200 Final Presentation</title>
-    
-    <link rel="stylesheet" href="webpage/proj_style.css">
 
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="project_style.css">
 </head>
 
-<style>
-    body {background-color: lightblue;} 
-    
-    img {border: 2px solid black;}
-    
-</style>
-    
 <body>
-    
-    <h1 style = "color:black; font-size: 50px;">
-         Hospital Billing Costs Among Different Insurance Providers
+    <nav class="navbar">
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="proj_viz1.html">Visualization 1</a></li>
+        <li><a href="proj_viz2.html">Visualization 2</a></li>
+        <li><a href="proj_viz3.html">Visualization 3</a></li>
+        <li><a href="proj_viz4.html">Visualization 4</a></li>
+        <li><a href="proj_viz5.html">Visualization 5</a></li>
+        <li><a href="proj_conclusion.html">Conclusion</a></li>
+    </ul>
+</nav>
+    <h1>
+        Hospital Billing Costs Among Different Health Insurance Providers
     </h1>
 
     <h4>
         DS4200 Final Presentation
-    <br>
-        Contributers: Hamsa Madhira, Selen Tasatmaz, and Katherine Sluggett
+        <br>
+        Contributors: Hamsa Madhira, Selen Tasatmaz, and Katherine Sluggett
     </h4>
 
-    <div>
-        <h3 style = "color:darkred; font-size: 26px;">    
-        <b>Research Question: How do billing costs vary among hospitals in relation to the insurance provider?</b>
+    <div class="A">
+        <h3>
+            <b>Research Question: How do billing costs vary among hospitals in relation to the insurance provider?</b>
         </h3>
-        
-        <h3 style = "color:black;font-size: 16px;">
-        Healthcare has become a highly-contested, highly-politicized topic in the United States due to the notoriously high healthcare costs. 
-        Private equity relationships with hospitals, rising inflation, and government policies have only exacerbated this problem. There are many 
-        factors in the final medical bill issued including the specifics of hospital, condition, and insurance provider. In this project, we 
-        investigate how billing costs for identical medical conditions influence these variations. Using this dataset, we will compare and analyze 
-            charges across institutions to assess its potential impact on healthcare accessibility while considering insurance type and identifying 
-            the patterns and potential drivers of the cost variation.       
-        </h3>
+        <p>
+            Healthcare has become a highly-contested, highly-politicized topic in the United States due to the notoriously high healthcare costs.
+            Private equity relationships with hospitals, rising inflation, and government policies have only exacerbated this problem.
+            Many factors may contribute to the final medical bill issued, including the specifics of hospital, condition, and insurance provider.
+            In this project, we investigate how billing costs for identical medical conditions correlate to these variations.
+        </p>
     </div>
-
-    <div>
-        <ul class = "A"> 
-            <u>Introduction to the Data</u>
-                <br><br>
-            <li> This dataset was sourced from Kaggle, and it displays synthetically-derived data for many different healthcare metrics across thousands of hospital stays. </li>
-                <br>
-            <li> The dimensions of the cleaned, pre-processed dataframe is 55500 x 21. It contains 10,000 synthetic patient healthcare records generated using Python’s Faker library to simulate real-world hospital data while avoiding HIPAA or privacy concerns. 
-                The dataset includes 15 attributes describing patient demographics, clinical conditions, hospital admission details, and treatment outcomes. The attributes include categorical, discrete, and continuous variables. Categorical features include insurance provider, medical condition, patient names, and patient gender.
-        Discrete values include year of hospital stay, patient age, date of admission, and discharge date. Continuous values include the daily billing and billing amounts. </li>
-                <br>
-            <li> The data is synthetically-derived, which does not always accurately reflect organic, real-world data.  </li>
     
+    <br><br>
+    
+    <div class="A">
+        <h3><u>Introduction to the Data</u></h3>
+        <ul>
+            <li>This dataset was sourced from Kaggle and displays synthetically-derived healthcare data.</li>
+            <li>The synthetic patient healthcare records were generated using Python's Faker library to simulate real-world hospital data, thus avoiding HIPAA or privacy violations.</li>
+            <li>The cleaned, processed dataframe is 55,500 x 21 and includes patient demographics, conditions, and billing information.</li>
+            <li>Data types include a range of continuous (numeric), discrete (numeric), and categorical values. </li>
         </ul>
         
-        <a href="https://www.kaggle.com/datasets/prasad22/healthcare-dataset" style="color: darkblue; font-weight: bold;font-size: 17px;">
-        More About the Data</a>
+        <h3><u>Limitations</u></h3>
+            The data is synthetic and may not always reflect real-world patterns. The data also does not specify location of these arbitrary hosptials (rural, suburban, urban), 
+            which is likely a major indicator of the how high the billing costs are. The state of the hospital's location is also not included, which is also another indicator of cost. 
+      </div>  
+    
+    <br><br>
+        <a href="https://www.kaggle.com/datasets/prasad22/healthcare-dataset">
+            Kaggle: Healthcare Dataset 
+        </a>
+    <br><br>
+
+    <head>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    </head>
+    
+<div class="table-container">
+        <table id="myTable" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>name</th>
+      <th>age</th>
+      <th>gender</th>
+      <th>blood_type</th>
+      <th>medical_condition</th>
+      <th>date_of_admission</th>
+      <th>doctor</th>
+      <th>hospital</th>
+      <th>insurance_provider</th>
+      <th>billing_amount</th>
+      <th>room_number</th>
+      <th>admission_type</th>
+      <th>discharge_date</th>
+      <th>medication</th>
+      <th>test_results</th>
+      <th>first_name</th>
+      <th>last_name</th>
+      <th>length_of_stay</th>
+      <th>year</th>
+      <th>age_group</th>
+      <th>daily_billing</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>bobby jackson</td>
+      <td>30</td>
+      <td>Male</td>
+      <td>B-</td>
+      <td>cancer</td>
+      <td>2024-01-31</td>
+      <td>Matthew Smith</td>
+      <td>sons and miller</td>
+      <td>blue cross</td>
+      <td>18856.281306</td>
+      <td>328</td>
+      <td>urgent</td>
+      <td>2024-02-02</td>
+      <td>Paracetamol</td>
+      <td>Normal</td>
+      <td>bobby</td>
+      <td>jackson</td>
+      <td>2</td>
+      <td>2024</td>
+      <td>18–35</td>
+      <td>9428.140653</td>
+    </tr>
+    <tr>
+      <td>leslie terry</td>
+      <td>62</td>
+      <td>Male</td>
+      <td>A+</td>
+      <td>obesity</td>
+      <td>2019-08-20</td>
+      <td>Samantha Davies</td>
+      <td>kim inc</td>
+      <td>medicare</td>
+      <td>33643.327287</td>
+      <td>265</td>
+      <td>emergency</td>
+      <td>2019-08-26</td>
+      <td>Ibuprofen</td>
+      <td>Inconclusive</td>
+      <td>leslie</td>
+      <td>terry</td>
+      <td>6</td>
+      <td>2019</td>
+      <td>51–65</td>
+      <td>5607.221214</td>
+    </tr>
+    <tr>
+      <td>danny smith</td>
+      <td>76</td>
+      <td>Female</td>
+      <td>A-</td>
+      <td>obesity</td>
+      <td>2022-09-22</td>
+      <td>Tiffany Mitchell</td>
+      <td>cook plc</td>
+      <td>aetna</td>
+      <td>27955.096079</td>
+      <td>205</td>
+      <td>emergency</td>
+      <td>2022-10-07</td>
+      <td>Aspirin</td>
+      <td>Normal</td>
+      <td>danny</td>
+      <td>smith</td>
+      <td>15</td>
+      <td>2022</td>
+      <td>65+</td>
+      <td>1863.673072</td>
+    </tr>
+    <tr>
+      <td>andrew watts</td>
+      <td>28</td>
+      <td>Female</td>
+      <td>O+</td>
+      <td>diabetes</td>
+      <td>2020-11-18</td>
+      <td>Kevin Wells</td>
+      <td>hernandez rogers and vang,</td>
+      <td>medicare</td>
+      <td>37909.782410</td>
+      <td>450</td>
+      <td>elective</td>
+      <td>2020-12-18</td>
+      <td>Ibuprofen</td>
+      <td>Abnormal</td>
+      <td>andrew</td>
+      <td>watts</td>
+      <td>30</td>
+      <td>2020</td>
+      <td>18–35</td>
+      <td>1263.659414</td>
+    </tr>
+    <tr>
+      <td>adrienne bell</td>
+      <td>43</td>
+      <td>Female</td>
+      <td>AB+</td>
+      <td>cancer</td>
+      <td>2022-09-19</td>
+      <td>Kathleen Hanna</td>
+      <td>white-white</td>
+      <td>aetna</td>
+      <td>14238.317814</td>
+      <td>458</td>
+      <td>urgent</td>
+      <td>2022-10-09</td>
+      <td>Penicillin</td>
+      <td>Abnormal</td>
+      <td>adrienne</td>
+      <td>bell</td>
+      <td>20</td>
+      <td>2022</td>
+      <td>36–50</td>
+      <td>711.915891</td>
+    </tr>
+    <tr>
+      <td>emily johnson</td>
+      <td>36</td>
+      <td>Male</td>
+      <td>A+</td>
+      <td>asthma</td>
+      <td>2023-12-20</td>
+      <td>Taylor Newton</td>
+      <td>nunez-humphrey</td>
+      <td>unitedhealthcare</td>
+      <td>48145.110951</td>
+      <td>389</td>
+      <td>urgent</td>
+      <td>2023-12-24</td>
+      <td>Ibuprofen</td>
+      <td>Normal</td>
+      <td>emily</td>
+      <td>johnson</td>
+      <td>4</td>
+      <td>2023</td>
+      <td>36–50</td>
+      <td>12036.277738</td>
+    </tr>
+    <tr>
+      <td>edward edwards</td>
+      <td>21</td>
+      <td>Female</td>
+      <td>AB-</td>
+      <td>diabetes</td>
+      <td>2020-11-03</td>
+      <td>Kelly Olson</td>
+      <td>group middleton</td>
+      <td>medicare</td>
+      <td>19580.872345</td>
+      <td>389</td>
+      <td>emergency</td>
+      <td>2020-11-15</td>
+      <td>Paracetamol</td>
+      <td>Inconclusive</td>
+      <td>edward</td>
+      <td>edwards</td>
+      <td>12</td>
+      <td>2020</td>
+      <td>18–35</td>
+      <td>1631.739362</td>
+    </tr>
+    </tbody>
+    </table>
+</div>
+
+    <script>
+        $(document).ready(function () {
+        $('#myTable').DataTable();
+        });
+    </script>
+
+    <br><br><br>
+    
+    <div class="A">
+        <h3><u>Overview</u></h3>
+
+        <ul class="center-list">
+            <li>Visualization 1: Stacked Bar Chart (interactive)</li>
+                <br>
+            <li>Visualization 2: Side-by-Side Scatter Plots (static)</li>
+                <br>
+            <li>Visualization 3: Box Plot (interactive)</li>
+                <br>
+            <li>Visualization 4: Line Panel (static)</li>
+                <br>
+            <li>Visualization 5: Heatmap (interactive)</li>
+                <br>
+            <li>Conclusion and Future Considerations</li>
+        </ul>
         
-        <br><br>
+    </div>
         
-        <img src="webpage/DS4200_proj_dataset1.jpg" alt="Photo" height="190">
-        <img src="webpage/DS4200_proj_dataset2.jpg" alt="Photo" height="190">
-    </div>
-
-    <div>
-        <h3 style = "color:black; font-size: 26px;">
-            <u>Static Visualization 1 </u>
-            <br><br>
-            <img src="webpage/static_bar_chart.jpg" alt="Photo" width="700">
-    
-            <h5>
-                (discuss how it was designed and describe the interactive features)
-            </h5>
-        </h3>
-    </div>
-
-    <div>
-        <h3 style = "color:black; font-size: 26px;">
-            <u>Static Visualization 2 </u>
-            <br><br>
-             <img src="webpage/static_line_panel.jpg" alt="Photo" width="1050">
-            
-            <h5>
-                (discuss how it was designed)
-            </h5>
-        </h3>
-    </div>
-
-    <div>
-        <h3 style = "color:black; font-size: 26px;">
-            <u> Interactive Visualization 1</u>
-            <br><br>
-            <iframe src="interactive_viz/interactive_stacked_bar.html" width=1000 height="500"></iframe>
-            
-            <h5>
-                (discuss how it was designed and describe the interactive features)
-            </h5>
-        </h3>
-    </div>
-
-    <div>
-        <h3 style = "color:black; font-size: 26px;">
-            <u> Interactive Visualization 2</u>
-            <br><br>
-            <iframe src="interactive_viz/barBubbleInteractive.html" width=1000 height="500"></iframe>
-            
-            <h5>
-                (discuss how it was designed and describe the interactive features)
-            </h5>
-        </h3>
-    </div>
-
-    <div>
-        <h3 style = "color:black; font-size: 26px;">
-            <u> Interactive Visualization 3</u>
-            <br><br>
-            <iframe src="interactive_viz/heatmap.html" width=1000 height="500"></iframe>
-            
-            <h5>
-                (discuss how it was designed and describe the interactive features)
-            </h5>
-        </h3>
-    </div>
-    
-     <div>
-        <ul class = "A"> 
-            <u>Conclusion of Findings</u>
-                <br><br>
-            <li> The initial static visualization demonstrates how age group may be correlated with the billing costs per insurance type. From this, it is reasonable to
-            conclude that there is not a significant deviation in costs according to age except for the youngest age group (0-17 years old), where blue cross costs are 
-                relatively higher and aetna costs are significantly lower.</li>
-                <br>
-            <li> From the second static visualization, we can see the rise and fall of billing costs for treatment of a single condition each year between 2019 and 2024. 
-                These changing rates could potentially reflect changes in the economy, which should especially be taken into account for 2020-2021 during the COVID-19 pandemic.
-                During these years, we can see the billing costs noticeably increase for each medical condition. This can be seen with diabetes, asthma, and hypertension.
-            </li>
-                <br>
-            <li> The interactive visualizatin demonstrates how each hospital charges for treatment of the same condition based on the insurance provider.
-            It is clear that not every hospital accepts the majority of insurance types, which is seen in Wilson PLC Hospital and INC Jackson Hospital. 
-                Medical care for the same condition for the same providers can vary by up to $30,0000 according to the bar chart. Although it is important to consider
-                the length of each hospital stay, these singificant disparities show how individual hospitals may have varying negotiated rates with insurance companies. 
-            </li>
-                <br>
-            <li> The interactive heatmap reveals that obesity consistently generates the highest average billing costs across nearly all insurance providers, with Cigna and Blue Cross
-reaching the highest values at approximately $26,100. Cancer, by contrast, tends to
-produce the lowest average billing, particularly under UnitedHealthcare and Aetna.
-Crucially, no single insurance provider is uniformly the most or least expensive.
-The interaction between the specific condition and the specific provider is what
-drives cost variation. This challenges the assumption that choosing one provider over
-another guarantees lower costs, and instead suggests that the nature of the medical
-condition itself plays a major role in determining what patients are billed. </li>
-<br>
-<li> The bar and bubble interactive visualization further reinforces that the 0–17 age
-group is a significant outlier in billing patterns. While adult age groups cluster
-tightly around $25,000 regardless of provider, pediatric billing shows much wider
-Variation. For example, Aetna bills nearly $30,600 for this group while Blue Cross bills only
-$24,600, a difference of roughly $6,000 for the same age group. In the bubble view,
-the size disparity between obesity and cancer bubbles makes clear that condition
-severity and treatment complexity, not just provider choice, are primary cost
-drivers. This underscores the need for greater pricing transparency, particularly for
-families with young children navigating insurance options. </li>
-<br>
-
-            <li> Overall, all of the visualizations highlight major problems with affordable access to care. Medicare and Aetna appear to have the highest billing costs observed across
-               the visualizations. With Medicare in mind, this suggests that elderly citizens may experience higher hospital billing costs. By continuing to shed light on this issue,
-                we can hope that a change comes to protect the healthcare access of all people in the United States, especially the elderly. </li>
-                <br>
-            <li> Future considerations for this kind of data investigation may include using real-world data to compare to this synthetic data. 
-                It may be important to consider this research question using organic data since synthetic data oftentimes is not reproducible using real-world data. 
-                Although synthetic data can sometimes help depict accurate statistical correlations and distributions, it will not be able to capture outliers
-                that occur in real data as well as more complex relationships. </li>
-                <br>
-            <li> It would also be worthwhile to depict any geospatial relationships among this data, which could potentially reflect the economy across different parts of the
-                country or even the world. Additionally, incorporating patient outcome data alongside billing information could help determine whether higher-cost providers and 
-                conditions actually correspond to better health outcomes — a critical question for evaluating whether the financial burden placed on patients is justified. </li>
-        </ul>   
-    </div>
-    
-    <div>
-        <h3 style = "color:darkred; font-size: 26px;">   
-        <b>Thank You!</b>     
-        </h3>  
-    </div>
 
 </body>
-
 </html>
